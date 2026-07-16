@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState, lazy, Suspense } from "react";
-import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2 } from "lucide-react";
+import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings } from "lucide-react";
 import { searchPlaces, type PlaceResult } from "@/lib/places.functions";
+import { useSettings } from "@/lib/settings";
 
 const DotGlobe = lazy(() => import("@/components/DotGlobe").then(m => ({ default: m.DotGlobe })));
 
@@ -20,20 +21,12 @@ const SUGGESTIONS = [
   "Loja de piscina", "Manicure",
 ];
 
-const WHATSAPP_MSG = `Olá! Tudo bem?
-
-Meu nome é Dev e trabalho com desenvolvimento de sites profissionais. Gostaria de apresentar uma solução que pode ajudar a sua loja a ter uma presença online mais forte.
-
-Desenvolvo sites modernos, personalizados e responsivos, que passam mais credibilidade, organizam melhor as informações da empresa, facilitam o contato e os agendamentos, além de oferecerem mais praticidade para os seus clientes.
-
-Se tiver interesse, será um prazer mostrar alguns projetos que já desenvolvi e conversar sobre como posso criar um site ideal para o seu negócio. Fico à disposição!`;
-
-function whatsappLink(phone: string | null): string | null {
+function whatsappLink(phone: string | null, message: string): string | null {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
   if (!digits) return null;
   const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
-  return `https://wa.me/${withCountry}?text=${encodeURIComponent(WHATSAPP_MSG)}`;
+  return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
 }
 
 function Home() {
@@ -56,6 +49,10 @@ function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      <header className="absolute right-4 top-4 z-20">
+        <Link to="/dashboard" className="glass-btn"><Settings className="h-3.5 w-3.5" /> Configurações</Link>
+      </header>
+
       <section className="relative">
         <Suspense fallback={null}>
           <DotGlobe />
@@ -64,9 +61,7 @@ function Home() {
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-royal/40 bg-royal/10 px-3 py-1 text-xs font-medium text-royal-bright backdrop-blur">
             <Sparkles className="h-3.5 w-3.5" /> Prospectador
           </div>
-          <h1 className="text-4xl font-bold leading-tight sm:text-6xl">
-            {"\n"}
-          </h1>
+          <h1 className="text-4xl font-bold leading-tight sm:text-6xl">{"\n"}</h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
             Encontre empresas qualificadas de qualquer segmento e cidade do Brasil. Dados direto do Google Places para acelerar sua equipe de vendas.
           </p>
@@ -143,7 +138,7 @@ function Home() {
 
         <div className="grid gap-4 md:grid-cols-2">
           {results.map((p) => (
-            <BusinessCard key={p.id} place={p} />
+            <BusinessCard key={p.id} place={p} segment={lastSearch?.q} />
           ))}
         </div>
       </section>
@@ -151,8 +146,10 @@ function Home() {
   );
 }
 
-function BusinessCard({ place }: { place: PlaceResult }) {
-  const wa = whatsappLink(place.phone);
+function BusinessCard({ place, segment }: { place: PlaceResult; segment?: string }) {
+  const { settings } = useSettings();
+  const navigate = useNavigate();
+  const wa = whatsappLink(place.phone, settings.whatsappMessage);
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-xl transition hover:border-royal/60">
       <div className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-br from-royal-bright/20 via-transparent to-primary/20 opacity-0 blur-lg transition group-hover:opacity-100" />
@@ -200,7 +197,12 @@ function BusinessCard({ place }: { place: PlaceResult }) {
           <button
             type="button"
             className="shiny-cta"
-            onClick={() => alert("Criar Site com IA — em breve! Este recurso será adicionado na próxima fase.")}
+            onClick={() =>
+              navigate({
+                to: "/builder",
+                search: { name: place.name, phone: place.phone ?? undefined, segment },
+              })
+            }
           >
             <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" /> Criar Site com IA</span>
           </button>
