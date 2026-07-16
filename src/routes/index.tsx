@@ -62,13 +62,10 @@ function Home() {
         </Suspense>
         <div className="relative z-10 mx-auto max-w-5xl px-4 pt-16 pb-10 sm:pt-24">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-royal/40 bg-royal/10 px-3 py-1 text-xs font-medium text-royal-bright backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" /> PROSPECTALOCAL
+            <Sparkles className="h-3.5 w-3.5" /> Prospectador
           </div>
           <h1 className="text-4xl font-bold leading-tight sm:text-6xl">
-            Inteligência de dados <br />
-            <span className="bg-gradient-to-r from-royal-bright via-primary to-royal-bright bg-clip-text text-transparent">
-              para prospecção B2B local
-            </span>
+            {"\n"}
           </h1>
           <p className="mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
             Encontre empresas qualificadas de qualquer segmento e cidade do Brasil. Dados direto do Google Places para acelerar sua equipe de vendas.
