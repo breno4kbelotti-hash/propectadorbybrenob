@@ -77,6 +77,20 @@ function Builder() {
     chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  // Salva/atualiza no histórico conforme a IA gera o HTML
+  useEffect(() => {
+    if (!latestHtml || streaming) return;
+    const siteName = name ?? "Site sem nome";
+    if (historyId) {
+      updateHistory(historyId, { html: latestHtml, name: siteName });
+    } else {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setHistoryId(id);
+      addHistory({ id, name: siteName, html: latestHtml, createdAt: Date.now() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestHtml, streaming]);
+
   // Pré-preenche a primeira mensagem quando vier de um card
   useEffect(() => {
     if (name && !input && messages.length === 0) {
