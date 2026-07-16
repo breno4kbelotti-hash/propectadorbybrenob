@@ -48,6 +48,7 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 function Builder() {
   const { name, phone, segment } = Route.useSearch();
+  const { addHistory, updateHistory } = useSettings();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -55,6 +56,9 @@ function Builder() {
   const [audio, setAudio] = useState<{ data: string; format: string } | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [preview, setPreview] = useState<"preview" | "code">("preview");
+  const [historyId, setHistoryId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [published, setPublished] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
