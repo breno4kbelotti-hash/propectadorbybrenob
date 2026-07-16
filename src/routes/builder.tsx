@@ -229,21 +229,50 @@ function Builder() {
     URL.revokeObjectURL(url);
   }
 
+  async function sharePreview() {
+    if (!historyId) return;
+    const url = `${window.location.origin}/preview/${historyId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      window.prompt("Copie o link da prévia:", url);
+    }
+  }
+
+  async function publishSite() {
+    if (!historyId || !latestHtml) return;
+    updateHistory(historyId, { published: true });
+    setPublished(true);
+    const url = `${window.location.origin}/preview/${historyId}`;
+    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+    setTimeout(() => setPublished(false), 2500);
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <Link to="/" className="glass-btn"><ArrowLeft className="h-3.5 w-3.5" /> Voltar</Link>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium">
               <Sparkles className="h-3.5 w-3.5" /> Criador com IA {name ? `— ${name}` : ""}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setPreview("preview")} className={`glass-btn ${preview === "preview" ? "border-primary!" : ""}`}><Eye className="h-3.5 w-3.5" /> Preview</button>
             <button onClick={() => setPreview("code")} className={`glass-btn ${preview === "code" ? "border-primary!" : ""}`}><Code2 className="h-3.5 w-3.5" /> Código</button>
-            <button onClick={downloadHtml} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
-              <span className="inline-flex items-center gap-1.5"><Download className="h-3.5 w-3.5" /> Baixar HTML</span>
+            <button onClick={sharePreview} disabled={!latestHtml} className="glass-btn disabled:opacity-40">
+              {shareCopied ? <><Check className="h-3.5 w-3.5" /> Link copiado</> : <><Share2 className="h-3.5 w-3.5" /> Compartilhar prévia</>}
+            </button>
+            <button onClick={downloadHtml} disabled={!latestHtml} className="glass-btn disabled:opacity-40">
+              <Download className="h-3.5 w-3.5" /> Baixar HTML
+            </button>
+            <button onClick={publishSite} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
+              <span className="inline-flex items-center gap-1.5">
+                {published ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
+              </span>
             </button>
           </div>
         </div>
