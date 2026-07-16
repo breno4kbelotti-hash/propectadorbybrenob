@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Send, ImagePlus, Mic, Square, Download, Loader2, Sparkles, Eye, Code2, X } from "lucide-react";
+import { ArrowLeft, Send, ImagePlus, Mic, Square, Download, Loader2, Sparkles, Eye, Code2, X, Share2, Rocket, Check } from "lucide-react";
+import { useSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/builder")({
   component: Builder,
@@ -47,6 +48,7 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 function Builder() {
   const { name, phone, segment } = Route.useSearch();
+  const { addHistory, updateHistory } = useSettings();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [images, setImages] = useState<string[]>([]);
@@ -54,6 +56,9 @@ function Builder() {
   const [audio, setAudio] = useState<{ data: string; format: string } | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [preview, setPreview] = useState<"preview" | "code">("preview");
+  const [historyId, setHistoryId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [published, setPublished] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -71,6 +76,20 @@ function Builder() {
   useEffect(() => {
     chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Salva/atualiza no histórico conforme a IA gera o HTML
+  useEffect(() => {
+    if (!latestHtml || streaming) return;
+    const siteName = name ?? "Site sem nome";
+    if (historyId) {
+      updateHistory(historyId, { html: latestHtml, name: siteName });
+    } else {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setHistoryId(id);
+      addHistory({ id, name: siteName, html: latestHtml, createdAt: Date.now() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestHtml, streaming]);
 
   // Pré-preenche a primeira mensagem quando vier de um card
   useEffect(() => {
@@ -210,21 +229,50 @@ function Builder() {
     URL.revokeObjectURL(url);
   }
 
+  async function sharePreview() {
+    if (!historyId) return;
+    const url = `${window.location.origin}/preview/${historyId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      window.prompt("Copie o link da prévia:", url);
+    }
+  }
+
+  async function publishSite() {
+    if (!historyId || !latestHtml) return;
+    updateHistory(historyId, { published: true });
+    setPublished(true);
+    const url = `${window.location.origin}/preview/${historyId}`;
+    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+    setTimeout(() => setPublished(false), 2500);
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <Link to="/" className="glass-btn"><ArrowLeft className="h-3.5 w-3.5" /> Voltar</Link>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium">
               <Sparkles className="h-3.5 w-3.5" /> Criador com IA {name ? `— ${name}` : ""}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setPreview("preview")} className={`glass-btn ${preview === "preview" ? "border-primary!" : ""}`}><Eye className="h-3.5 w-3.5" /> Preview</button>
             <button onClick={() => setPreview("code")} className={`glass-btn ${preview === "code" ? "border-primary!" : ""}`}><Code2 className="h-3.5 w-3.5" /> Código</button>
-            <button onClick={downloadHtml} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
-              <span className="inline-flex items-center gap-1.5"><Download className="h-3.5 w-3.5" /> Baixar HTML</span>
+            <button onClick={sharePreview} disabled={!latestHtml} className="glass-btn disabled:opacity-40">
+              {shareCopied ? <><Check className="h-3.5 w-3.5" /> Link copiado</> : <><Share2 className="h-3.5 w-3.5" /> Compartilhar prévia</>}
+            </button>
+            <button onClick={downloadHtml} disabled={!latestHtml} className="glass-btn disabled:opacity-40">
+              <Download className="h-3.5 w-3.5" /> Baixar HTML
+            </button>
+            <button onClick={publishSite} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
+              <span className="inline-flex items-center gap-1.5">
+                {published ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
+              </span>
             </button>
           </div>
         </div>

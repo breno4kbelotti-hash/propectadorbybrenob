@@ -7,11 +7,22 @@ export type ThemeSettings = {
   foreground: string;
   border: string;
   accent: string;
+  globe: string;
+  shadow: string;
+};
+
+export type SiteHistoryItem = {
+  id: string;
+  name: string;
+  html: string;
+  createdAt: number;
+  published?: boolean;
 };
 
 export type AppSettings = {
   theme: ThemeSettings;
   whatsappMessage: string;
+  history: SiteHistoryItem[];
 };
 
 const DEFAULT_WA = `Olá! Tudo bem?
@@ -30,8 +41,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
     foreground: "#f5f7ff",
     border: "#1e2a5a",
     accent: "#60a5fa",
+    globe: "#60a5fa",
+    shadow: "#3b82f6",
   },
   whatsappMessage: DEFAULT_WA,
+  history: [],
 };
 
 const KEY = "prospectalocal.settings.v1";
@@ -40,10 +54,25 @@ type Ctx = {
   settings: AppSettings;
   setTheme: (patch: Partial<ThemeSettings>) => void;
   setWhatsappMessage: (msg: string) => void;
+  addHistory: (item: SiteHistoryItem) => void;
+  updateHistory: (id: string, patch: Partial<SiteHistoryItem>) => void;
+  removeHistory: (id: string) => void;
   reset: () => void;
 };
 
 const SettingsContext = createContext<Ctx | null>(null);
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace("#", "");
+  const n = h.length === 3
+    ? h.split("").map((c) => c + c).join("")
+    : h.padEnd(6, "0");
+  return {
+    r: parseInt(n.slice(0, 2), 16),
+    g: parseInt(n.slice(2, 4), 16),
+    b: parseInt(n.slice(4, 6), 16),
+  };
+}
 
 function applyTheme(t: ThemeSettings) {
   if (typeof document === "undefined") return;
@@ -62,6 +91,9 @@ function applyTheme(t: ThemeSettings) {
   r.setProperty("--border", t.border);
   r.setProperty("--input", t.border);
   r.setProperty("--accent", t.accent);
+  r.setProperty("--globe-color", t.globe);
+  const { r: sr, g: sg, b: sb } = hexToRgb(t.shadow);
+  r.setProperty("--shadow-rgb", `${sr}, ${sg}, ${sb}`);
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
@@ -76,6 +108,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         const merged: AppSettings = {
           theme: { ...DEFAULT_SETTINGS.theme, ...(parsed.theme ?? {}) },
           whatsappMessage: parsed.whatsappMessage ?? DEFAULT_SETTINGS.whatsappMessage,
+          history: Array.isArray(parsed.history) ? parsed.history : [],
         };
         setSettings(merged);
       }
@@ -99,6 +132,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     settings,
     setTheme: (patch) => setSettings((s) => ({ ...s, theme: { ...s.theme, ...patch } })),
     setWhatsappMessage: (msg) => setSettings((s) => ({ ...s, whatsappMessage: msg })),
+    addHistory: (item) => setSettings((s) => ({ ...s, history: [item, ...s.history].slice(0, 50) })),
+    updateHistory: (id, patch) => setSettings((s) => ({
+      ...s,
+      history: s.history.map((h) => (h.id === id ? { ...h, ...patch } : h)),
+    })),
+    removeHistory: (id) => setSettings((s) => ({ ...s, history: s.history.filter((h) => h.id !== id) })),
     reset: () => setSettings(DEFAULT_SETTINGS),
   };
 
