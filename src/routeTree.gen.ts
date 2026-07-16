@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuilderRoute = BuilderRouteImport.update({
+  id: '/builder',
+  path: '/builder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,34 @@ const ApiAiChatRoute = ApiAiChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/api/ai-chat'
+  fullPaths: '/' | '/builder' | '/dashboard' | '/api/ai-chat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/api/ai-chat'
-  id: '__root__' | '/' | '/dashboard' | '/api/ai-chat'
+  to: '/' | '/builder' | '/dashboard' | '/api/ai-chat'
+  id: '__root__' | '/' | '/builder' | '/dashboard' | '/api/ai-chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BuilderRoute: typeof BuilderRoute
   DashboardRoute: typeof DashboardRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/builder': {
+      id: '/builder'
+      path: '/builder'
+      fullPath: '/builder'
+      preLoaderRoute: typeof BuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BuilderRoute: BuilderRoute,
   DashboardRoute: DashboardRoute,
   ApiAiChatRoute: ApiAiChatRoute,
 }
