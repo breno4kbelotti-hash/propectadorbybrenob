@@ -6,12 +6,34 @@ export const Route = createFileRoute("/preview/$id")({
   component: PreviewPage,
 });
 
+function decodeHash(hash: string): string | null {
+  try {
+    const h = hash.startsWith("#") ? hash.slice(1) : hash;
+    if (!h) return null;
+    const bin = atob(h.replace(/-/g, "+").replace(/_/g, "/"));
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
 function PreviewPage() {
   const { id } = Route.useParams();
   const [html, setHtml] = useState<string | null>(null);
   const [name, setName] = useState<string>("Site");
 
   useEffect(() => {
+    // 1. Try hash-encoded HTML (works cross-device / shared links)
+    if (typeof window !== "undefined" && window.location.hash) {
+      const decoded = decodeHash(window.location.hash);
+      if (decoded) {
+        setHtml(decoded);
+        setName("Site compartilhado");
+        return;
+      }
+    }
+    // 2. Fallback: localStorage history (same-browser)
     try {
       const raw = localStorage.getItem("prospectalocal.settings.v1");
       if (!raw) return;
@@ -30,7 +52,7 @@ function PreviewPage() {
         <div>
           <h1 className="text-2xl font-semibold">Prévia não encontrada</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Esta prévia é armazenada localmente neste navegador. Se você abriu o link em outro dispositivo, peça para baixar o HTML.
+            Esta prévia local não existe neste navegador. Use o botão "Compartilhar prévia" no criador de sites — ele gera um link que funciona em qualquer dispositivo.
           </p>
           <Link to="/" className="glass-btn mt-4 inline-flex"><ArrowLeft className="h-3.5 w-3.5" /> Voltar</Link>
         </div>
@@ -49,7 +71,7 @@ function PreviewPage() {
           <ExternalLink className="h-3.5 w-3.5" /> Abrir em nova aba
         </a>
       </header>
-      <iframe title={name} srcDoc={html} className="flex-1 w-full bg-white" sandbox="allow-scripts allow-same-origin" />
+      <iframe title={name} srcDoc={html} className="flex-1 w-full bg-white" sandbox="allow-scripts allow-forms allow-popups allow-modals" />
     </div>
   );
 }
