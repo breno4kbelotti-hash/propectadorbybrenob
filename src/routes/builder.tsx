@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Send, ImagePlus, Mic, Square, Download, Loader2, Sparkles, Eye, Code2, X, Share2, Rocket, Check, Copy } from "lucide-react";
+import { ArrowLeft, Send, ImagePlus, Mic, Square, Download, Loader2, Sparkles, Eye, Code2, X, Share2, Rocket, Check } from "lucide-react";
 import { useSettings } from "@/lib/settings";
 import { LiquidGithubButton } from "@/components/ui/liquid-github-button";
 
