@@ -404,7 +404,7 @@ function Builder() {
               </div>
             </div>
           ) : preview === "preview" ? (
-            <iframe title="preview" srcDoc={latestHtml} className="h-full w-full bg-white" sandbox="allow-scripts allow-same-origin" />
+            <iframe title="preview" srcDoc={latestHtml} className="h-full w-full bg-white" sandbox="allow-scripts allow-forms allow-popups allow-modals" />
           ) : (
             <pre className="h-full overflow-auto p-4 font-mono text-xs leading-relaxed">
               <code>{latestHtml}</code>
