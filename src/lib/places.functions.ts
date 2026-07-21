@@ -95,7 +95,7 @@ export const searchPlaces = createServerFn({ method: "POST" })
       if (all.length >= 40) break;
     }
 
-    return all.slice(0, 60).map((p) => ({
+    const mapped = all.slice(0, 60).map((p) => ({
       id: p.id,
       name: p.displayName?.text ?? "Sem nome",
       address: p.formattedAddress ?? "",
@@ -105,4 +105,7 @@ export const searchPlaces = createServerFn({ method: "POST" })
       websiteUri: p.websiteUri ?? null,
       googleMapsUri: p.googleMapsUri ?? null,
     }));
+
+    return data.onlyWithoutWebsite ? mapped.filter((p) => !p.websiteUri) : mapped;
   });
+
