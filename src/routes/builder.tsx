@@ -61,9 +61,11 @@ function Builder() {
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [published, setPublished] = useState(false);
+  const [ghCopied, setGhCopied] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
 
   const latestHtml = (() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -231,9 +233,17 @@ function Builder() {
     URL.revokeObjectURL(url);
   }
 
+  function encodeHtmlToHash(html: string): string {
+    const bytes = new TextEncoder().encode(html);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_");
+  }
+
   async function sharePreview() {
-    if (!historyId) return;
-    const url = `${window.location.origin}/preview/${historyId}`;
+    if (!latestHtml) return;
+    const hash = encodeHtmlToHash(latestHtml);
+    const url = `${window.location.origin}/preview/share#${hash}`;
     try {
       await navigator.clipboard.writeText(url);
       setShareCopied(true);
@@ -247,10 +257,23 @@ function Builder() {
     if (!historyId || !latestHtml) return;
     updateHistory(historyId, { published: true });
     setPublished(true);
-    const url = `${window.location.origin}/preview/${historyId}`;
+    // Publica com link universal (hash) — funciona em qualquer dispositivo, hospedado na Lovable.
+    const hash = encodeHtmlToHash(latestHtml);
+    const url = `${window.location.origin}/preview/${historyId}#${hash}`;
     try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
     setTimeout(() => setPublished(false), 2500);
   }
+
+  async function openGithub() {
+    if (!latestHtml) return;
+    try {
+      await navigator.clipboard.writeText(latestHtml);
+      setGhCopied(true);
+      setTimeout(() => setGhCopied(false), 2500);
+    } catch { /* ignore */ }
+    window.open("https://github.com/new", "_blank", "noopener,noreferrer");
+  }
+
 
   return (
     <div className="flex min-h-screen flex-col">
