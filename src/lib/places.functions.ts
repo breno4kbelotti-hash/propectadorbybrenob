@@ -4,7 +4,9 @@ import { z } from "zod";
 const SearchInput = z.object({
   query: z.string().min(1).max(200),
   location: z.string().min(1).max(200),
+  onlyWithoutWebsite: z.boolean().optional(),
 });
+
 
 export type PlaceResult = {
   id: string;
