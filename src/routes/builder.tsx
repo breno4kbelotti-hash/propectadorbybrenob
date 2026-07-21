@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Send, ImagePlus, Mic, Square, Download, Loader2, Sparkles, Eye, Code2, X, Share2, Rocket, Check } from "lucide-react";
 import { useSettings } from "@/lib/settings";
+import { LiquidGithubButton } from "@/components/ui/liquid-github-button";
+
 
 export const Route = createFileRoute("/builder")({
   component: Builder,
@@ -59,9 +61,11 @@ function Builder() {
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [published, setPublished] = useState(false);
+  const [ghCopied, setGhCopied] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
 
   const latestHtml = (() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -229,9 +233,17 @@ function Builder() {
     URL.revokeObjectURL(url);
   }
 
+  function encodeHtmlToHash(html: string): string {
+    const bytes = new TextEncoder().encode(html);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_");
+  }
+
   async function sharePreview() {
-    if (!historyId) return;
-    const url = `${window.location.origin}/preview/${historyId}`;
+    if (!latestHtml) return;
+    const hash = encodeHtmlToHash(latestHtml);
+    const url = `${window.location.origin}/preview/share#${hash}`;
     try {
       await navigator.clipboard.writeText(url);
       setShareCopied(true);
@@ -245,10 +257,23 @@ function Builder() {
     if (!historyId || !latestHtml) return;
     updateHistory(historyId, { published: true });
     setPublished(true);
-    const url = `${window.location.origin}/preview/${historyId}`;
+    // Publica com link universal (hash) — funciona em qualquer dispositivo, hospedado na Lovable.
+    const hash = encodeHtmlToHash(latestHtml);
+    const url = `${window.location.origin}/preview/${historyId}#${hash}`;
     try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
     setTimeout(() => setPublished(false), 2500);
   }
+
+  async function openGithub() {
+    if (!latestHtml) return;
+    try {
+      await navigator.clipboard.writeText(latestHtml);
+      setGhCopied(true);
+      setTimeout(() => setGhCopied(false), 2500);
+    } catch { /* ignore */ }
+    window.open("https://github.com/new", "_blank", "noopener,noreferrer");
+  }
+
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -269,6 +294,13 @@ function Builder() {
             <button onClick={downloadHtml} disabled={!latestHtml} className="glass-btn disabled:opacity-40">
               <Download className="h-3.5 w-3.5" /> Baixar HTML
             </button>
+            <div className={latestHtml ? "" : "pointer-events-none opacity-40"}>
+              <LiquidGithubButton
+                onClick={openGithub}
+                label={ghCopied ? "HTML copiado — cole no repo" : "Enviar ao GitHub"}
+              />
+            </div>
+
             <button onClick={publishSite} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
               <span className="inline-flex items-center gap-1.5">
                 {published ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
@@ -372,7 +404,7 @@ function Builder() {
               </div>
             </div>
           ) : preview === "preview" ? (
-            <iframe title="preview" srcDoc={latestHtml} className="h-full w-full bg-white" sandbox="allow-scripts allow-same-origin" />
+            <iframe title="preview" srcDoc={latestHtml} className="h-full w-full bg-white" sandbox="allow-scripts allow-forms allow-popups allow-modals" />
           ) : (
             <pre className="h-full overflow-auto p-4 font-mono text-xs leading-relaxed">
               <code>{latestHtml}</code>

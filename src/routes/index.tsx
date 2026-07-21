@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState, lazy, Suspense } from "react";
-import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings } from "lucide-react";
+import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings, Instagram, Filter } from "lucide-react";
+
 import { searchPlaces, type PlaceResult } from "@/lib/places.functions";
 import { useSettings } from "@/lib/settings";
 
@@ -32,18 +33,20 @@ function whatsappLink(phone: string | null, message: string): string | null {
 function Home() {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
+  const [onlyWithoutWebsite, setOnlyWithoutWebsite] = useState(true);
   const [lastSearch, setLastSearch] = useState<{ q: string; l: string } | null>(null);
   const search = useServerFn(searchPlaces);
   const mutation = useMutation({
-    mutationFn: (vars: { query: string; location: string }) => search({ data: vars }),
+    mutationFn: (vars: { query: string; location: string; onlyWithoutWebsite: boolean }) => search({ data: vars }),
     onSuccess: (_, vars) => setLastSearch({ q: vars.query, l: vars.location }),
   });
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!query.trim() || !location.trim()) return;
-    mutation.mutate({ query: query.trim(), location: location.trim() });
+    mutation.mutate({ query: query.trim(), location: location.trim(), onlyWithoutWebsite });
   };
+
 
   const results = mutation.data ?? [];
 
@@ -100,7 +103,15 @@ function Home() {
                   )}
                 </button>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOnlyWithoutWebsite((v) => !v)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition ${onlyWithoutWebsite ? "border-royal bg-royal/20 text-foreground" : "border-border/60 bg-background/40 text-muted-foreground"}`}
+                  title="Foco em prospecção: só empresas sem site"
+                >
+                  <Filter className="h-3 w-3" /> Só empresas sem site
+                </button>
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
@@ -112,6 +123,7 @@ function Home() {
                   </button>
                 ))}
               </div>
+
             </div>
           </form>
 
@@ -185,6 +197,14 @@ function BusinessCard({ place, segment }: { place: PlaceResult; segment?: string
               <MapPin className="h-3.5 w-3.5" /> Ver no Maps
             </a>
           )}
+          <a
+            href={`https://www.google.com/search?q=${encodeURIComponent(`instagram ${place.name}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-tr from-fuchsia-600 via-pink-500 to-amber-400 px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
+          >
+            <Instagram className="h-3.5 w-3.5" /> Instagram
+          </a>
           {place.websiteUri ? (
             <a href={place.websiteUri} target="_blank" rel="noopener noreferrer" className="glass-btn">
               <Globe className="h-3.5 w-3.5" /> Site
@@ -194,6 +214,7 @@ function BusinessCard({ place, segment }: { place: PlaceResult; segment?: string
               <Globe className="h-3.5 w-3.5" /> Sem site
             </span>
           )}
+
           <button
             type="button"
             className="shiny-cta"
