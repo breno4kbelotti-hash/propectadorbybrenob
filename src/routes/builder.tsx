@@ -60,8 +60,19 @@ function Builder() {
   const [preview, setPreview] = useState<"preview" | "code">("preview");
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
-  const [published, setPublished] = useState(false);
-  const [ghCopied, setGhCopied] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishName, setPublishName] = useState("");
+  const [publishSlug, setPublishSlug] = useState("");
+  const [publishThumb, setPublishThumb] = useState<string>("");
+  const [publishedUrl, setPublishedUrl] = useState<string>("");
+  const [publishing, setPublishing] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const [ghOpen, setGhOpen] = useState(false);
+  const [ghRepoName, setGhRepoName] = useState("");
+  const [ghPrivate, setGhPrivate] = useState(false);
+  const [ghBusy, setGhBusy] = useState(false);
+  const [ghResult, setGhResult] = useState<{ repoUrl: string; pagesUrl: string } | null>(null);
+  const [ghError, setGhError] = useState<string>("");
   const chatRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -253,25 +264,90 @@ function Builder() {
     }
   }
 
-  async function publishSite() {
-    if (!historyId || !latestHtml) return;
-    updateHistory(historyId, { published: true });
-    setPublished(true);
-    // Publica com link universal (hash) — funciona em qualquer dispositivo, hospedado na Lovable.
-    const hash = encodeHtmlToHash(latestHtml);
-    const url = `${window.location.origin}/preview/${historyId}#${hash}`;
-    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
-    setTimeout(() => setPublished(false), 2500);
+  function slugifyStr(s: string): string {
+    return s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60);
   }
 
-  async function openGithub() {
-    if (!latestHtml) return;
+  function openPublishModal() {
+    if (!latestHtml || !historyId) return;
+    const defaultName = name ?? "Meu site";
+    setPublishName(publishName || defaultName);
+    setPublishSlug(publishSlug || slugifyStr(defaultName));
+    setPublishOpen(true);
+  }
+
+  async function onThumbFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await fileToDataUrl(file);
+    setPublishThumb(url);
+    e.target.value = "";
+  }
+
+  async function confirmPublish() {
+    if (!historyId || !latestHtml) return;
+    setPublishing(true);
     try {
-      await navigator.clipboard.writeText(latestHtml);
-      setGhCopied(true);
-      setTimeout(() => setGhCopied(false), 2500);
-    } catch { /* ignore */ }
-    window.open("https://github.com/new", "_blank", "noopener,noreferrer");
+      const slug = slugifyStr(publishSlug || publishName) || historyId;
+      const hash = encodeHtmlToHash(latestHtml);
+      const url = `${window.location.origin}/preview/${slug}#${hash}`;
+      updateHistory(historyId, {
+        published: true,
+        name: publishName || name || "Meu site",
+        slug,
+        thumbnail: publishThumb || undefined,
+        publishedUrl: url,
+      });
+      setPublishedUrl(url);
+      try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  function openGithubModal() {
+    if (!latestHtml) return;
+    setGhResult(null);
+    setGhError("");
+    setGhRepoName(ghRepoName || slugifyStr(publishName || name || "site-prospectador"));
+    setGhOpen(true);
+  }
+
+  async function pushToGithub() {
+    if (!latestHtml) return;
+    setGhBusy(true);
+    setGhError("");
+    try {
+      const res = await fetch("/api/github-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          repoName: ghRepoName,
+          html: latestHtml,
+          description: `Site ${publishName || name || ""} — gerado pelo Prospectador`.trim(),
+          private: ghPrivate,
+        }),
+      });
+      if (!res.ok) {
+        setGhError(await res.text());
+        return;
+      }
+      const data = (await res.json()) as { repoUrl: string; pagesUrl: string };
+      setGhResult(data);
+      if (historyId) {
+        updateHistory(historyId, { githubUrl: data.repoUrl, githubPagesUrl: data.pagesUrl });
+      }
+    } catch (e) {
+      setGhError((e as Error).message);
+    } finally {
+      setGhBusy(false);
+    }
   }
 
 
@@ -295,15 +371,12 @@ function Builder() {
               <Download className="h-3.5 w-3.5" /> Baixar HTML
             </button>
             <div className={latestHtml ? "" : "pointer-events-none opacity-40"}>
-              <LiquidGithubButton
-                onClick={openGithub}
-                label={ghCopied ? "HTML copiado — cole no repo" : "Enviar ao GitHub"}
-              />
+              <LiquidGithubButton onClick={openGithubModal} label="Enviar ao GitHub" />
             </div>
 
-            <button onClick={publishSite} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
+            <button onClick={openPublishModal} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
               <span className="inline-flex items-center gap-1.5">
-                {published ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
+                {publishedUrl ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
               </span>
             </button>
           </div>
@@ -412,6 +485,101 @@ function Builder() {
           )}
         </div>
       </div>
+
+      {/* PUBLISH MODAL */}
+      {publishOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setPublishOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl border border-border/60 bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold inline-flex items-center gap-2"><Rocket className="h-5 w-5 text-primary" /> Publicar site</h2>
+              <button onClick={() => setPublishOpen(false)} className="rounded-full p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>
+            </div>
+
+            {!publishedUrl ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome do site</label>
+                  <input value={publishName} onChange={(e) => { setPublishName(e.target.value); setPublishSlug(slugifyStr(e.target.value)); }} className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Barbearia do Zé" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">URL personalizada</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">/preview/</span>
+                    <input value={publishSlug} onChange={(e) => setPublishSlug(slugifyStr(e.target.value))} className="flex-1 bg-transparent outline-none" placeholder="meu-site" />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Foto de capa (thumbnail)</label>
+                  <div className="flex items-center gap-3">
+                    {publishThumb && <img src={publishThumb} alt="" className="h-16 w-16 rounded-lg object-cover" />}
+                    <label className="glass-btn cursor-pointer">
+                      <ImagePlus className="h-3.5 w-3.5" /> {publishThumb ? "Trocar imagem" : "Escolher imagem"}
+                      <input type="file" accept="image/*" onChange={onThumbFile} className="hidden" />
+                    </label>
+                    {publishThumb && <button onClick={() => setPublishThumb("")} className="text-xs text-muted-foreground hover:text-foreground">Remover</button>}
+                  </div>
+                </div>
+                <button onClick={confirmPublish} disabled={publishing || !publishName || !publishSlug} className="gradient-button w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40">
+                  {publishing ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Publicando…</span> : "Publicar agora"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm">
+                  <div className="mb-2 inline-flex items-center gap-2 font-semibold text-primary"><Check className="h-4 w-4" /> Site publicado com sucesso!</div>
+                  <p className="text-xs text-muted-foreground">Seu site está online e acessível em qualquer dispositivo pelo link abaixo:</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/60 p-2">
+                  <code className="flex-1 truncate px-2 text-xs">{publishedUrl}</code>
+                  <button onClick={async () => { try { await navigator.clipboard.writeText(publishedUrl); setUrlCopied(true); setTimeout(() => setUrlCopied(false), 1500); } catch { /* ignore */ } }} className="glass-btn">
+                    {urlCopied ? <><Check className="h-3.5 w-3.5" /> Copiado</> : "Copiar"}
+                  </button>
+                  <a href={publishedUrl} target="_blank" rel="noopener noreferrer" className="glass-btn">Abrir</a>
+                </div>
+                <button onClick={() => { setPublishOpen(false); setPublishedUrl(""); }} className="glass-btn w-full justify-center">Editar publicação</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* GITHUB MODAL */}
+      {ghOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setGhOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl border border-border/60 bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Enviar ao GitHub</h2>
+              <button onClick={() => setGhOpen(false)} className="rounded-full p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>
+            </div>
+            {!ghResult ? (
+              <div className="space-y-4">
+                <p className="text-xs text-muted-foreground">Cria um novo repositório na sua conta do GitHub e publica automaticamente o <code>index.html</code>. Também ativa o GitHub Pages para acesso público.</p>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome do repositório</label>
+                  <input value={ghRepoName} onChange={(e) => setGhRepoName(slugifyStr(e.target.value))} className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="meu-site" />
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={ghPrivate} onChange={(e) => setGhPrivate(e.target.checked)} />
+                  Repositório privado
+                </label>
+                {ghError && <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{ghError}</div>}
+                <button onClick={pushToGithub} disabled={ghBusy || !ghRepoName} className="gradient-button w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40">
+                  {ghBusy ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Enviando…</span> : "Criar repositório e enviar"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm">
+                  <div className="mb-2 inline-flex items-center gap-2 font-semibold text-primary"><Check className="h-4 w-4" /> Repositório criado!</div>
+                </div>
+                <a href={ghResult.repoUrl} target="_blank" rel="noopener noreferrer" className="glass-btn w-full justify-center">Abrir no GitHub</a>
+                <a href={ghResult.pagesUrl} target="_blank" rel="noopener noreferrer" className="glass-btn w-full justify-center">Ver site no GitHub Pages</a>
+                <p className="text-[10px] text-muted-foreground">O GitHub Pages pode levar 1-2 minutos para ficar disponível.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

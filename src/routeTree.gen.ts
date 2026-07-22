@@ -13,6 +13,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PreviewIdRouteImport } from './routes/preview.$id'
+import { Route as ApiGithubPublishRouteImport } from './routes/api/github-publish'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -35,6 +36,11 @@ const PreviewIdRoute = PreviewIdRouteImport.update({
   path: '/preview/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGithubPublishRoute = ApiGithubPublishRouteImport.update({
+  id: '/api/github-publish',
+  path: '/api/github-publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAiChatRoute = ApiAiChatRouteImport.update({
   id: '/api/ai-chat',
   path: '/api/ai-chat',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/github-publish': typeof ApiGithubPublishRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/github-publish': typeof ApiGithubPublishRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRoutesById {
@@ -61,19 +69,33 @@ export interface FileRoutesById {
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/github-publish': typeof ApiGithubPublishRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/builder' | '/dashboard' | '/api/ai-chat' | '/preview/$id'
+  fullPaths:
+    | '/'
+    | '/builder'
+    | '/dashboard'
+    | '/api/ai-chat'
+    | '/api/github-publish'
+    | '/preview/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/builder' | '/dashboard' | '/api/ai-chat' | '/preview/$id'
+  to:
+    | '/'
+    | '/builder'
+    | '/dashboard'
+    | '/api/ai-chat'
+    | '/api/github-publish'
+    | '/preview/$id'
   id:
     | '__root__'
     | '/'
     | '/builder'
     | '/dashboard'
     | '/api/ai-chat'
+    | '/api/github-publish'
     | '/preview/$id'
   fileRoutesById: FileRoutesById
 }
@@ -82,6 +104,7 @@ export interface RootRouteChildren {
   BuilderRoute: typeof BuilderRoute
   DashboardRoute: typeof DashboardRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
+  ApiGithubPublishRoute: typeof ApiGithubPublishRoute
   PreviewIdRoute: typeof PreviewIdRoute
 }
 
@@ -115,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PreviewIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/github-publish': {
+      id: '/api/github-publish'
+      path: '/api/github-publish'
+      fullPath: '/api/github-publish'
+      preLoaderRoute: typeof ApiGithubPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ai-chat': {
       id: '/api/ai-chat'
       path: '/api/ai-chat'
@@ -130,18 +160,9 @@ const rootRouteChildren: RootRouteChildren = {
   BuilderRoute: BuilderRoute,
   DashboardRoute: DashboardRoute,
   ApiAiChatRoute: ApiAiChatRoute,
+  ApiGithubPublishRoute: ApiGithubPublishRoute,
   PreviewIdRoute: PreviewIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
