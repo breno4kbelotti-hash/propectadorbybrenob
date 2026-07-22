@@ -371,15 +371,12 @@ function Builder() {
               <Download className="h-3.5 w-3.5" /> Baixar HTML
             </button>
             <div className={latestHtml ? "" : "pointer-events-none opacity-40"}>
-              <LiquidGithubButton
-                onClick={openGithub}
-                label={ghCopied ? "HTML copiado — cole no repo" : "Enviar ao GitHub"}
-              />
+              <LiquidGithubButton onClick={openGithubModal} label="Enviar ao GitHub" />
             </div>
 
-            <button onClick={publishSite} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
+            <button onClick={openPublishModal} disabled={!latestHtml} className="gradient-button rounded-full px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">
               <span className="inline-flex items-center gap-1.5">
-                {published ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
+                {publishedUrl ? <><Check className="h-3.5 w-3.5" /> Publicado</> : <><Rocket className="h-3.5 w-3.5" /> Publicar site</>}
               </span>
             </button>
           </div>
