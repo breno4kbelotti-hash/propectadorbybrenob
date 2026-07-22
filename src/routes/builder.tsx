@@ -264,25 +264,90 @@ function Builder() {
     }
   }
 
-  async function publishSite() {
-    if (!historyId || !latestHtml) return;
-    updateHistory(historyId, { published: true });
-    setPublished(true);
-    // Publica com link universal (hash) — funciona em qualquer dispositivo, hospedado na Lovable.
-    const hash = encodeHtmlToHash(latestHtml);
-    const url = `${window.location.origin}/preview/${historyId}#${hash}`;
-    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
-    setTimeout(() => setPublished(false), 2500);
+  function slugifyStr(s: string): string {
+    return s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60);
   }
 
-  async function openGithub() {
-    if (!latestHtml) return;
+  function openPublishModal() {
+    if (!latestHtml || !historyId) return;
+    const defaultName = name ?? "Meu site";
+    setPublishName(publishName || defaultName);
+    setPublishSlug(publishSlug || slugifyStr(defaultName));
+    setPublishOpen(true);
+  }
+
+  async function onThumbFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await fileToDataUrl(file);
+    setPublishThumb(url);
+    e.target.value = "";
+  }
+
+  async function confirmPublish() {
+    if (!historyId || !latestHtml) return;
+    setPublishing(true);
     try {
-      await navigator.clipboard.writeText(latestHtml);
-      setGhCopied(true);
-      setTimeout(() => setGhCopied(false), 2500);
-    } catch { /* ignore */ }
-    window.open("https://github.com/new", "_blank", "noopener,noreferrer");
+      const slug = slugifyStr(publishSlug || publishName) || historyId;
+      const hash = encodeHtmlToHash(latestHtml);
+      const url = `${window.location.origin}/preview/${slug}#${hash}`;
+      updateHistory(historyId, {
+        published: true,
+        name: publishName || name || "Meu site",
+        slug,
+        thumbnail: publishThumb || undefined,
+        publishedUrl: url,
+      });
+      setPublishedUrl(url);
+      try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  function openGithubModal() {
+    if (!latestHtml) return;
+    setGhResult(null);
+    setGhError("");
+    setGhRepoName(ghRepoName || slugifyStr(publishName || name || "site-prospectador"));
+    setGhOpen(true);
+  }
+
+  async function pushToGithub() {
+    if (!latestHtml) return;
+    setGhBusy(true);
+    setGhError("");
+    try {
+      const res = await fetch("/api/github-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          repoName: ghRepoName,
+          html: latestHtml,
+          description: `Site ${publishName || name || ""} — gerado pelo Prospectador`.trim(),
+          private: ghPrivate,
+        }),
+      });
+      if (!res.ok) {
+        setGhError(await res.text());
+        return;
+      }
+      const data = (await res.json()) as { repoUrl: string; pagesUrl: string };
+      setGhResult(data);
+      if (historyId) {
+        updateHistory(historyId, { githubUrl: data.repoUrl, githubPagesUrl: data.pagesUrl });
+      }
+    } catch (e) {
+      setGhError((e as Error).message);
+    } finally {
+      setGhBusy(false);
+    }
   }
 
 
