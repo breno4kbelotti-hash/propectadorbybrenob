@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/ai-chat")({
         }
 
         const payload = {
-          model: "google/gemini-3-flash-preview",
+          model: "google/gemini-3.6-flash",
           stream: true,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },

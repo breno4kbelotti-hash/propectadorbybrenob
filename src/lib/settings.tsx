@@ -17,6 +17,11 @@ export type SiteHistoryItem = {
   html: string;
   createdAt: number;
   published?: boolean;
+  slug?: string;
+  thumbnail?: string; // data URL or https
+  publishedUrl?: string; // shareable public URL
+  githubUrl?: string;
+  githubPagesUrl?: string;
 };
 
 export type AppSettings = {
