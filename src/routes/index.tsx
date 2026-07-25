@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState, lazy, Suspense } from "react";
-import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings, Instagram, Filter } from "lucide-react";
+import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings, Instagram, Filter, Library } from "lucide-react";
 
 import { searchPlaces, type PlaceResult } from "@/lib/places.functions";
 import { useSettings } from "@/lib/settings";
@@ -52,9 +52,11 @@ function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <header className="absolute right-4 top-4 z-20">
+      <header className="absolute right-4 top-4 z-20 flex flex-wrap gap-2">
+        <Link to="/prompts" className="glass-btn"><Library className="h-3.5 w-3.5" /> Prompts</Link>
         <Link to="/dashboard" className="glass-btn"><Settings className="h-3.5 w-3.5" /> Configurações</Link>
       </header>
+
 
       <section className="relative">
         <Suspense fallback={null}>

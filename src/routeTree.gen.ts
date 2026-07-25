@@ -9,13 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PromptsRouteImport } from './routes/prompts'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PreviewIdRouteImport } from './routes/preview.$id'
-import { Route as ApiGithubPublishRouteImport } from './routes/api/github-publish'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 
+const PromptsRoute = PromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -36,11 +41,6 @@ const PreviewIdRoute = PreviewIdRouteImport.update({
   path: '/preview/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGithubPublishRoute = ApiGithubPublishRouteImport.update({
-  id: '/api/github-publish',
-  path: '/api/github-publish',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAiChatRoute = ApiAiChatRouteImport.update({
   id: '/api/ai-chat',
   path: '/api/ai-chat',
@@ -51,16 +51,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
+  '/prompts': typeof PromptsRoute
   '/api/ai-chat': typeof ApiAiChatRoute
-  '/api/github-publish': typeof ApiGithubPublishRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
+  '/prompts': typeof PromptsRoute
   '/api/ai-chat': typeof ApiAiChatRoute
-  '/api/github-publish': typeof ApiGithubPublishRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRoutesById {
@@ -68,8 +68,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
+  '/prompts': typeof PromptsRoute
   '/api/ai-chat': typeof ApiAiChatRoute
-  '/api/github-publish': typeof ApiGithubPublishRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRouteTypes {
@@ -78,24 +78,24 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/dashboard'
+    | '/prompts'
     | '/api/ai-chat'
-    | '/api/github-publish'
     | '/preview/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/builder'
     | '/dashboard'
+    | '/prompts'
     | '/api/ai-chat'
-    | '/api/github-publish'
     | '/preview/$id'
   id:
     | '__root__'
     | '/'
     | '/builder'
     | '/dashboard'
+    | '/prompts'
     | '/api/ai-chat'
-    | '/api/github-publish'
     | '/preview/$id'
   fileRoutesById: FileRoutesById
 }
@@ -103,13 +103,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   DashboardRoute: typeof DashboardRoute
+  PromptsRoute: typeof PromptsRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
-  ApiGithubPublishRoute: typeof ApiGithubPublishRoute
   PreviewIdRoute: typeof PreviewIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/prompts': {
+      id: '/prompts'
+      path: '/prompts'
+      fullPath: '/prompts'
+      preLoaderRoute: typeof PromptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -138,13 +145,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PreviewIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/github-publish': {
-      id: '/api/github-publish'
-      path: '/api/github-publish'
-      fullPath: '/api/github-publish'
-      preLoaderRoute: typeof ApiGithubPublishRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/ai-chat': {
       id: '/api/ai-chat'
       path: '/api/ai-chat'
@@ -159,20 +159,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   DashboardRoute: DashboardRoute,
+  PromptsRoute: PromptsRoute,
   ApiAiChatRoute: ApiAiChatRoute,
-  ApiGithubPublishRoute: ApiGithubPublishRoute,
   PreviewIdRoute: PreviewIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
