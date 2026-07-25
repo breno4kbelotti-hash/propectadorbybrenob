@@ -543,32 +543,28 @@ function Builder() {
               <h2 className="text-lg font-semibold">Enviar ao GitHub</h2>
               <button onClick={() => setGhOpen(false)} className="rounded-full p-1 hover:bg-white/10"><X className="h-4 w-4" /></button>
             </div>
-            {!ghResult ? (
-              <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">Cria um novo repositório na sua conta do GitHub e publica automaticamente o <code>index.html</code>. Também ativa o GitHub Pages para acesso público.</p>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome do repositório</label>
-                  <input value={ghRepoName} onChange={(e) => setGhRepoName(slugifyStr(e.target.value))} className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="meu-site" />
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={ghPrivate} onChange={(e) => setGhPrivate(e.target.checked)} />
-                  Repositório privado
-                </label>
-                {ghError && <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{ghError}</div>}
-                <button onClick={pushToGithub} disabled={ghBusy || !ghRepoName} className="gradient-button w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40">
-                  {ghBusy ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Enviando…</span> : "Criar repositório e enviar"}
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Sem precisar de API key. Ao continuar, baixamos o <code>index.html</code> do site e abrimos o GitHub já com o repositório pronto para ser criado — é só clicar em <b>Create repository</b> e arrastar o arquivo baixado.
+              </p>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome do repositório</label>
+                <input value={ghRepoName} onChange={(e) => setGhRepoName(slugifyStr(e.target.value))} className="w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm outline-none focus:border-primary" placeholder="meu-site" />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={ghPrivate} onChange={(e) => setGhPrivate(e.target.checked)} />
+                Repositório privado
+              </label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button onClick={copyHtml} className="glass-btn flex-1 justify-center">
+                  {ghCopied ? <><Check className="h-3.5 w-3.5" /> Código copiado</> : "Copiar código"}
+                </button>
+                <button onClick={goToGithub} disabled={!ghRepoName} className="gradient-button flex-1 rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-40">
+                  Baixar e abrir no GitHub
                 </button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm">
-                  <div className="mb-2 inline-flex items-center gap-2 font-semibold text-primary"><Check className="h-4 w-4" /> Repositório criado!</div>
-                </div>
-                <a href={ghResult.repoUrl} target="_blank" rel="noopener noreferrer" className="glass-btn w-full justify-center">Abrir no GitHub</a>
-                <a href={ghResult.pagesUrl} target="_blank" rel="noopener noreferrer" className="glass-btn w-full justify-center">Ver site no GitHub Pages</a>
-                <p className="text-[10px] text-muted-foreground">O GitHub Pages pode levar 1-2 minutos para ficar disponível.</p>
-              </div>
-            )}
+            </div>
+
           </div>
         </div>
       )}
