@@ -37,7 +37,11 @@ function Dashboard() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between">
           <Link to="/" className="glass-btn"><ArrowLeft className="h-3.5 w-3.5" /> Voltar</Link>
-          <button onClick={reset} className="glass-btn"><RotateCcw className="h-3.5 w-3.5" /> Restaurar padrão</button>
+          <div className="flex gap-2">
+            <Link to="/prompts" className="glass-btn"><Library className="h-3.5 w-3.5" /> Biblioteca de prompts</Link>
+            <button onClick={reset} className="glass-btn"><RotateCcw className="h-3.5 w-3.5" /> Restaurar padrão</button>
+          </div>
+
         </div>
 
         <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-card/90 via-card/60 to-background/40 p-8 backdrop-blur-xl shadow-[0_0_80px_-20px_rgba(var(--shadow-rgb,59_130_246),0.5)]">
