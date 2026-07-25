@@ -70,9 +70,8 @@ function Builder() {
   const [ghOpen, setGhOpen] = useState(false);
   const [ghRepoName, setGhRepoName] = useState("");
   const [ghPrivate, setGhPrivate] = useState(false);
-  const [ghBusy, setGhBusy] = useState(false);
-  const [ghResult, setGhResult] = useState<{ repoUrl: string; pagesUrl: string } | null>(null);
-  const [ghError, setGhError] = useState<string>("");
+  const [ghCopied, setGhCopied] = useState(false);
+
   const chatRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
