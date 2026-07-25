@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSettings, DEFAULT_SETTINGS, type ThemeSettings } from "@/lib/settings";
-import { ArrowLeft, RotateCcw, Palette, MessageCircle, History, Trash2, Eye, Download, Globe2, Sparkles } from "lucide-react";
+import { ArrowLeft, RotateCcw, Palette, MessageCircle, History, Trash2, Eye, Download, Globe2, Sparkles, Library } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
