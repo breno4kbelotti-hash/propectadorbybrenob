@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useState, lazy, Suspense } from "react";
-import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings, Instagram, Filter } from "lucide-react";
+import { Search, MapPin, Building2, Star, Phone, Globe, MessageCircle, Sparkles, Loader2, Settings, Instagram, Filter, Library } from "lucide-react";
 
 import { searchPlaces, type PlaceResult } from "@/lib/places.functions";
 import { useSettings } from "@/lib/settings";
