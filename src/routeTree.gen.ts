@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PromptsRouteImport } from './routes/prompts'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PreviewIdRouteImport } from './routes/preview.$id'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 
+const PromptsRoute = PromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
+  '/prompts': typeof PromptsRoute
   '/api/ai-chat': typeof ApiAiChatRoute
   '/preview/$id': typeof PreviewIdRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
+  '/prompts': typeof PromptsRoute
   '/api/ai-chat': typeof ApiAiChatRoute
   '/preview/$id': typeof PreviewIdRoute
 }
@@ -60,19 +68,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/dashboard': typeof DashboardRoute
+  '/prompts': typeof PromptsRoute
   '/api/ai-chat': typeof ApiAiChatRoute
   '/preview/$id': typeof PreviewIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/builder' | '/dashboard' | '/api/ai-chat' | '/preview/$id'
+  fullPaths:
+    | '/'
+    | '/builder'
+    | '/dashboard'
+    | '/prompts'
+    | '/api/ai-chat'
+    | '/preview/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/builder' | '/dashboard' | '/api/ai-chat' | '/preview/$id'
+  to:
+    | '/'
+    | '/builder'
+    | '/dashboard'
+    | '/prompts'
+    | '/api/ai-chat'
+    | '/preview/$id'
   id:
     | '__root__'
     | '/'
     | '/builder'
     | '/dashboard'
+    | '/prompts'
     | '/api/ai-chat'
     | '/preview/$id'
   fileRoutesById: FileRoutesById
@@ -81,12 +103,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   DashboardRoute: typeof DashboardRoute
+  PromptsRoute: typeof PromptsRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
   PreviewIdRoute: typeof PreviewIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/prompts': {
+      id: '/prompts'
+      path: '/prompts'
+      fullPath: '/prompts'
+      preLoaderRoute: typeof PromptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -129,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   DashboardRoute: DashboardRoute,
+  PromptsRoute: PromptsRoute,
   ApiAiChatRoute: ApiAiChatRoute,
   PreviewIdRoute: PreviewIdRoute,
 }
