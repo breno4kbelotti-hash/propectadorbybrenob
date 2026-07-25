@@ -312,8 +312,8 @@ function Builder() {
 
   function openGithubModal() {
     if (!latestHtml) return;
-    setGhResult(null);
-    setGhError("");
+    setGhCopied(false);
+
     setGhRepoName(ghRepoName || slugifyStr(publishName || name || "site-prospectador"));
     setGhOpen(true);
   }
