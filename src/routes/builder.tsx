@@ -319,36 +319,29 @@ function Builder() {
     setGhOpen(true);
   }
 
-  async function pushToGithub() {
+  async function copyHtml() {
     if (!latestHtml) return;
-    setGhBusy(true);
-    setGhError("");
     try {
-      const res = await fetch("/api/github-publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          repoName: ghRepoName,
-          html: latestHtml,
-          description: `Site ${publishName || name || ""} — gerado pelo Prospectador`.trim(),
-          private: ghPrivate,
-        }),
-      });
-      if (!res.ok) {
-        setGhError(await res.text());
-        return;
-      }
-      const data = (await res.json()) as { repoUrl: string; pagesUrl: string };
-      setGhResult(data);
-      if (historyId) {
-        updateHistory(historyId, { githubUrl: data.repoUrl, githubPagesUrl: data.pagesUrl });
-      }
-    } catch (e) {
-      setGhError((e as Error).message);
-    } finally {
-      setGhBusy(false);
+      await navigator.clipboard.writeText(latestHtml);
+      setGhCopied(true);
+      setTimeout(() => setGhCopied(false), 2000);
+    } catch { /* ignore */ }
+  }
+
+  function goToGithub() {
+    if (!latestHtml) return;
+    downloadHtml();
+    const params = new URLSearchParams({
+      name: ghRepoName || "meu-site",
+      description: `Site ${publishName || name || ""} — gerado pelo Prospectador`.trim(),
+      visibility: ghPrivate ? "private" : "public",
+    });
+    window.open(`https://github.com/new?${params.toString()}`, "_blank", "noopener,noreferrer");
+    if (historyId) {
+      updateHistory(historyId, { githubUrl: `https://github.com/new?${params.toString()}` });
     }
   }
+
 
 
   return (
