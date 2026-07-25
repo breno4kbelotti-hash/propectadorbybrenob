@@ -76,8 +76,8 @@ export const searchPlaces = createServerFn({ method: "POST" })
     const all: NonNullable<PlacesResponse["places"]> = [];
     let pageToken: string | undefined = undefined;
 
-    // Até 3 páginas (~60 resultados max). Paramos quando não houver nextPageToken.
-    for (let i = 0; i < 3; i++) {
+    // Até 4 páginas (~80 resultados max). Paramos quando não houver nextPageToken.
+    for (let i = 0; i < 4; i++) {
       const body: Record<string, unknown> = { ...baseBody };
       if (pageToken) body.pageToken = pageToken;
       let resp: PlacesResponse;
@@ -92,10 +92,10 @@ export const searchPlaces = createServerFn({ method: "POST" })
       pageToken = resp.nextPageToken;
       // Google exige um pequeno delay antes do próximo pageToken ficar ativo.
       await new Promise((r) => setTimeout(r, 1600));
-      if (all.length >= 40) break;
+      if (all.length >= 80) break;
     }
 
-    const mapped = all.slice(0, 60).map((p) => ({
+    const mapped = all.slice(0, 80).map((p) => ({
       id: p.id,
       name: p.displayName?.text ?? "Sem nome",
       address: p.formattedAddress ?? "",
